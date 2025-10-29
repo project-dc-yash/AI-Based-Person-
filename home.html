@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI Person Detection — Dashboard</title>
+  <style>
+    /* ========== Reset ========== */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;
+      background:linear-gradient(180deg,#f6f8fb,#ffffff);color:#0f1724}
+
+    /* ========== Layout ========== */
+    .app{display:flex;height:100vh;gap:20px;padding:20px}
+    .sidebar{width:260px;background:#0b1220;color:#fff;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:18px;box-shadow:0 6px 18px rgba(2,6,23,0.18)}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#00b4d8,#0077b6);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px}
+    .brand h1{font-size:15px}
+    nav{display:flex;flex-direction:column;gap:8px}
+    .nav-item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;cursor:pointer;color:#cfe8ff}
+    .nav-item:hover{background:rgba(255,255,255,0.03);color:#fff}
+    .nav-item.active{background:linear-gradient(90deg,#06283d,#054a5a);} 
+
+    .main{flex:1;display:flex;flex-direction:column;gap:18px}
+    .header{display:flex;justify-content:space-between;align-items:center}
+    .search{flex:1;margin-left:12px}
+    .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6eef7;background:#fff}
+
+    /* top cards */
+    .cards{display:flex;gap:14px}
+    .card{flex:1;background:#fff;border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(10,20,40,0.06)}
+    .card h3{font-size:13px;color:#374151}
+    .stat{font-size:22px;font-weight:700;margin-top:6px}
+    .small{font-size:12px;color:#6b7280;margin-top:6px}
+
+    /* content area */
+    .content{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .panel{background:#fff;border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(10,20,40,0.06)}
+
+    /* video feed */
+    .video-wrap{position:relative;height:480px;border-radius:10px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+    .video-wrap video{width:100%;height:100%;object-fit:cover}
+    .overlay{position:absolute;left:12px;bottom:12px;background:rgba(2,6,23,0.6);color:#fff;padding:8px 10px;border-radius:8px;font-size:13px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    .btn{padding:8px 12px;border-radius:10px;border:1px solid rgba(2,6,23,0.06);cursor:pointer;background:#f8fafc}
+    .btn.primary{background:linear-gradient(90deg,#00c2ff,#0066ff);color:#fff;border:none}
+
+    /* detection log */
+    .log-list{display:flex;flex-direction:column;gap:10px;max-height:480px;overflow:auto;padding-right:6px}
+    .log-item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:10px;border:1px solid #eef2f7}
+    .pill{padding:6px 8px;border-radius:8px;font-size:12px;background:#fff}
+    .status-safe{color:#16a34a}
+    .status-alert{color:#dc2626;font-weight:700}
+
+    /* settings */
+    .form-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    label{font-size:13px;color:#374151;min-width:120px}
+    input[type=range]{width:100%}
+
+    /* responsive */
+    @media (max-width:1000px){
+      .app{flex-direction:column;padding:12px}
+      .sidebar{width:100%;flex-direction:row;overflow:auto}
+      .main{width:100%}
+      .content{grid-template-columns:1fr}
+      .video-wrap{height:360px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" role="navigation" aria-label="Main navigation">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <h1>DC Supply — Detector</h1>
+          <div style="font-size:12px;color:#9fb8cc">Person Detection</div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav-item active" id="nav-dashboard">🏠 Dashboard</div>
+        <a href="Live Feed.html" class="nav-item">🎥 Live Feed</a>
+
+        <div class="nav-item" id="nav-log">📝 Detection Log</div>
+   <a href="settings.html" class="nav-item">⚙️ Settings</a>
+        <div style="flex:1"></div>
+        <div style="font-size:12px;color:#9fb8cc">Status</div>
+        <a href="restricted.html" class="nav-item" style="margin-top:6px">🔒 Restricted Area</a>
+
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="header">
+        <div style="display:flex;align-items:center">
+          <h2 style="font-size:18px">Dashboard</h2>
+          <div class="search" style="max-width:520px;margin-left:16px"><input placeholder="Search logs, cameras or events..."/></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="font-size:13px;color:#6b7280">User: Admin</div>
+          <div class="btn">🔔 3</div>
+          <div class="btn">Profile</div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Active Cameras</h3>
+          <div class="stat" id="stat-cameras">2</div>
+          <div class="small">Monitored zones across site</div>
+        </div>
+        <div class="card">
+          <h3>Detections (24h)</h3>
+          <div class="stat" id="stat-detections">7</div>
+          <div class="small">Person detections in the last 24 hours</div>
+        </div>
+        <div class="card">
+          <h3>Alerts (Active)</h3>
+          <div class="stat" id="stat-alerts">1</div>
+          <div class="small">Open alerts that need review</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <section class="panel">
+          <h3 style="margin-bottom:10px">Live Feed</h3>
+          <div class="video-wrap" id="videoWrap">
+            <!-- Replace the video element's src with your Raspberry Pi MJPEG or HLS stream URL -->
+            <video id="liveVideo" autoplay muted playsinline>
+              <source src="" type="video/mp4">
+              <!-- If you use an MJPEG endpoint, you can replace the <video> with an <img> that points to the MJPEG stream. -->
+            </video>
+            <div class="overlay" id="overlay">Zone: Gate A • Mode: Monitoring</div>
+          </div>
+
+          <div class="controls" style="margin-top:10px">
+            <button class="btn primary" id="btn-start">Start Monitoring</button>
+            <button class="btn" id="btn-stop">Stop</button>
+            <button class="btn" id="btn-sim">Simulate Detection</button>
+            <div style="flex:1"></div>
+            <div class="small">Last sync: <span id="lastSync">—</span></div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <h3 style="margin-bottom:10px">Detection Log</h3>
+          <div class="log-list" id="logList">
+            <!-- dynamically appended log items -->
+          </div>
+
+          <h4 style="margin-top:12px">Settings</h4>
+          <div style="margin-top:8px">
+            <div class="form-row">
+              <label for="sensitivity">Sensitivity</label>
+              <input id="sensitivity" type="range" min="1" max="100" value="50" />
+            </div>
+            <div class="form-row">
+              <label for="alertToggle">Alerts</label>
+              <input id="alertToggle" type="checkbox" checked />
+            </div>
+            <div class="form-row">
+              <label for="streamUrl">Camera Stream URL</label>
+            </div>
+            <div class="form-row">
+              <input id="streamUrl" placeholder="http://raspberrypi:8080/stream" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eef2f7" />
+            </div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" id="btn-save">Save</button>
+              <button class="btn" id="btn-reset">Reset</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // ---------------------- Demo JS (replace with real integration) ----------------------
+    // This script provides interactive UX for the HTML/CSS dashboard. In a real deployment you'll
+    // replace parts where appropriate with your backend / Raspberry Pi stream integration.
+
+    const logList = document.getElementById('logList');
+    const lastSync = document.getElementById('lastSync');
+    const statDetections = document.getElementById('stat-detections');
+    const statAlerts = document.getElementById('stat-alerts');
+    const statCameras = document.getElementById('stat-cameras');
+
+    let detections = 7;
+    let alerts = 1;
+    let cams = 2;
+
+    function updateStats(){
+      statDetections.textContent = detections;
+      statAlerts.textContent = alerts;
+      statCameras.textContent = cams;
+    }
+    updateStats();
+
+    function addLog({time, zone, confidence, image, alert}){
+      const item = document.createElement('div');
+      item.className = 'log-item';
+
+      item.innerHTML = `
+        <div style="width:64px;height:48px;background:#f1f5f9;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+          ${image ? `<img src="${image}" alt="detected" style="width:100%;height:100%;object-fit:cover">` : '<svg width="40" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#e2e8f0"/></svg>'}
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Person detected</div>
+            <div style="font-size:12px;color:#6b7280">${time}</div>
+          </div>
+          <div style="margin-top:6px;font-size:13px;color:#374151">Zone: ${zone} • Confidence: ${confidence}%</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <div class="pill ${alert? 'status-alert':'status-safe'}">${alert? 'ALERT':'Safe'}</div>
+          <button class="btn" style="padding:6px 8px;font-size:12px" onclick="openDetail('${time}')">View</button>
+        </div>
+      `;
+
+      logList.prepend(item);
+    }
+
+    function openDetail(time){
+      alert('Open details for event at '+time+' (replace with modal or side panel in production)');
+    }
+
+    // Simulate detection events
+    document.getElementById('btn-sim').addEventListener('click',()=>{
+      const now = new Date();
+      const timeStr = now.toLocaleString();
+      const zone = Math.random()>0.5? 'Gate A':'Gate B';
+      const conf = Math.round(60 + Math.random()*40);
+      const isAlert = conf>75 || Math.random()>0.8;
+      detections++;
+      if(isAlert) alerts++;
+      addLog({time:timeStr,zone,confidence:conf,image:'',alert:isAlert});
+      updateStats();
+      lastSync.textContent = timeStr;
+
+      // visual flash overlay for alert
+      if(isAlert){
+        flashAlert();
+      }
+    });
+
+    document.getElementById('btn-start').addEventListener('click',()=>{
+      const url = document.getElementById('streamUrl').value.trim();
+      const video = document.getElementById('liveVideo');
+
+      if(url){
+        // if the URL is an MJPEG endpoint, replace video with <img src=url> in production
+        // here we just set last sync and update UI
+        lastSync.textContent = new Date().toLocaleString();
+        alert('Started monitoring using stream URL (demo). In production set up a fetch to the stream.');
+      } else {
+        alert('Please enter your Raspberry Pi stream URL in settings. Example: http://raspberrypi.local:8080/stream');
+      }
+    });
+
+    document.getElementById('btn-stop').addEventListener('click',()=>{
+      lastSync.textContent = 'Stopped';
+    });
+
+    document.getElementById('btn-save').addEventListener('click',()=>{
+      alert('Settings saved (demo). In production persist to server or localStorage.');
+    });
+
+    function flashAlert(){
+      const w = document.getElementById('videoWrap');
+      const el = document.createElement('div');
+      el.style.position='absolute';
+      el.style.inset='0';
+      el.style.background='rgba(220,38,38,0.12)';
+      el.style.pointerEvents='none';
+      w.appendChild(el);
+      setTimeout(()=>{w.removeChild(el)},600);
+    }
+
+    // initial sample logs
+    addLog({time:new Date().toLocaleString(),zone:'Gate A',confidence:82,image:'',alert:true});
+    addLog({time:new Date(Date.now()-1000*60*40).toLocaleString(),zone:'Patrol 3',confidence:68,image:'',alert:false});
+
+  </script>
+</body>
+</html>

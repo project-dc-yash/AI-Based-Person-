@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Live Feed — AI Person Detection</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#f6f8fb,#ffffff);color:#0f1724}
+    header{background:#0b1220;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+    header h1{font-size:16px}
+    header a{color:#9fb8cc;text-decoration:none;font-size:14px}
+    header a:hover{color:#fff}
+    main{max-width:1100px;margin:20px auto;padding:20px;display:grid;grid-template-columns:2fr 1fr;gap:20px}
+    .panel{background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,36,0.08);padding:14px}
+    .video-wrap{position:relative;height:480px;border-radius:10px;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center}
+    .video-wrap video{width:100%;height:100%;object-fit:cover}
+    .overlay{position:absolute;bottom:10px;left:10px;background:rgba(2,6,23,0.6);color:#fff;padding:8px 10px;border-radius:8px;font-size:13px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    .btn{padding:8px 12px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer}
+    .btn.primary{background:linear-gradient(90deg,#00c2ff,#0066ff);color:#fff;border:none}
+    aside .panel{margin-bottom:14px}
+    label{font-size:13px;color:#374151;display:block;margin-bottom:6px}
+    input{width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:10px}
+    .log{max-height:220px;overflow:auto;font-size:13px;color:#374151;background:#f9fafb;border-radius:8px;padding:8px;border:1px solid #e5e7eb}
+    .log-item{padding:6px 4px;border-bottom:1px dashed #e5e7eb}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎥 Live Feed — AI Person Detection</h1>
+    <a href="index.html">⬅ Back to Dashboard</a>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2 style="font-size:16px;margin-bottom:10px;">Live Camera Stream</h2>
+      <div class="video-wrap">
+        <!-- Replace with Raspberry Pi stream (MJPEG, RTSP, or HLS) -->
+        <video id="liveVideo" autoplay muted playsinline>
+          <source src="" type="video/mp4">
+        </video>
+        <div class="overlay" id="overlay">Zone: Gate A • Monitoring</div>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="startBtn">Start Monitoring</button>
+        <button class="btn" id="stopBtn">Stop</button>
+        <button class="btn" id="snapshotBtn">Snapshot</button>
+      </div>
+    </section>
+
+    <aside>
+      <div class="panel">
+        <h3 style="font-size:15px;margin-bottom:8px;">Settings</h3>
+        <label for="streamUrl">Camera Stream URL</label>
+        <input id="streamUrl" placeholder="http://raspberrypi.local:8080/stream" />
+        <label for="sensitivity">Detection Sensitivity</label>
+        <input id="sensitivity" type="range" min="1" max="100" value="50">
+        <button class="btn" id="saveSettings">Save</button>
+      </div>
+
+      <div class="panel">
+        <h3 style="font-size:15px;margin-bottom:8px;">Detection Log</h3>
+        <div class="log" id="logList"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const logList = document.getElementById('logList');
+    const addLog = msg => {
+      const div = document.createElement('div');
+      div.className = 'log-item';
+      div.textContent = msg;
+      logList.prepend(div);
+    };
+
+    document.getElementById('startBtn').onclick = () => {
+      const url = document.getElementById('streamUrl').value.trim();
+      if(!url) return alert('Enter stream URL');
+      document.querySelector('#liveVideo source').src = url;
+      document.getElementById('liveVideo').load();
+      addLog('Monitoring started: ' + new Date().toLocaleTimeString());
+    };
+
+    document.getElementById('stopBtn').onclick = () => {
+      document.querySelector('#liveVideo source').src = '';
+      document.getElementById('liveVideo').load();
+      addLog('Monitoring stopped: ' + new Date().toLocaleTimeString());
+    };
+
+    document.getElementById('snapshotBtn').onclick = () => {
+      addLog('Snapshot captured (demo)');
+    };
+
+    document.getElementById('saveSettings').onclick = () => {
+      addLog('Settings saved');
+    };
+  </script>
+</body>
+</html>

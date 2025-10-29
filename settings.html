@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Settings — AI Person Detection System</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#f6f8fb,#ffffff);color:#0f1724}
+    header{background:#0b1220;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+    header h1{font-size:16px}
+    header a{color:#9fb8cc;text-decoration:none;font-size:14px}
+    header a:hover{color:#fff}
+    main{max-width:900px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,36,0.08)}
+    h2{font-size:18px;margin-bottom:14px;color:#0f1724}
+    section{margin-bottom:30px}
+    label{display:block;font-size:13px;color:#374151;margin-bottom:6px}
+    input[type=text],input[type=number],input[type=password]{width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:14px}
+    input[type=range]{width:100%;margin-bottom:14px}
+    input[type=checkbox]{margin-right:6px}
+    .btn{padding:10px 14px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;margin-right:8px}
+    .btn.primary{background:linear-gradient(90deg,#00c2ff,#0066ff);color:#fff;border:none}
+    .btn:hover{opacity:0.9}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .save-status{margin-top:10px;font-size:13px;color:#059669}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚙️ Settings — AI Person Detection</h1>
+    <a href="index.html">⬅ Back to Dashboard</a>
+  </header>
+
+  <main>
+    <h2>System Configuration</h2>
+
+    <section>
+      <div class="row">
+        <div>
+          <label for="cameraUrl">Camera Stream URL</label>
+          <input id="cameraUrl" type="text" placeholder="http://raspberrypi.local:8080/stream" />
+        </div>
+        <div>
+          <label for="websocketUrl">WebSocket Server URL</label>
+          <input id="websocketUrl" type="text" placeholder="ws://raspberrypi.local:8765" />
+        </div>
+      </div>
+
+      <label for="sensitivity">Detection Sensitivity</label>
+      <input id="sensitivity" type="range" min="1" max="100" value="50" />
+
+      <label><input id="alertToggle" type="checkbox" checked /> Enable Real-Time Alerts</label>
+      <label><input id="soundAlert" type="checkbox" /> Enable Sound Alert</label>
+    </section>
+
+    <h2>Appearance Settings</h2>
+    <section>
+      <label for="themeSelect">Theme Mode</label>
+      <select id="themeSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:14px">
+        <option value="light">Light Mode</option>
+        <option value="dark">Dark Mode</option>
+      </select>
+      <label><input id="animations" type="checkbox" checked /> Enable Animations</label>
+    </section>
+
+    <h2>Admin Settings</h2>
+    <section>
+      <label for="adminName">Admin Username</label>
+      <input id="adminName" type="text" placeholder="Enter admin username" />
+      <label for="adminPassword">Admin Password</label>
+      <input id="adminPassword" type="password" placeholder="Enter new password" />
+    </section>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:20px">
+      <button class="btn primary" id="saveBtn">Save Settings</button>
+      <button class="btn" id="resetBtn">Reset</button>
+    </div>
+    <div class="save-status" id="saveStatus"></div>
+  </main>
+
+  <script>
+    const saveBtn = document.getElementById('saveBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const saveStatus = document.getElementById('saveStatus');
+
+    saveBtn.onclick = () => {
+      const settings = {
+        cameraUrl: document.getElementById('cameraUrl').value,
+        websocketUrl: document.getElementById('websocketUrl').value,
+        sensitivity: document.getElementById('sensitivity').value,
+        alertToggle: document.getElementById('alertToggle').checked,
+        soundAlert: document.getElementById('soundAlert').checked,
+        theme: document.getElementById('themeSelect').value,
+        animations: document.getElementById('animations').checked,
+        adminName: document.getElementById('adminName').value
+      };
+      localStorage.setItem('ai_settings', JSON.stringify(settings));
+      saveStatus.textContent = '✅ Settings saved successfully!';
+    };
+
+    resetBtn.onclick = () => {
+      localStorage.removeItem('ai_settings');
+      saveStatus.textContent = '⚠️ Settings reset to default.';
+    };
+
+    window.onload = () => {
+      const saved = localStorage.getItem('ai_settings');
+      if(saved){
+        const s = JSON.parse(saved);
+        document.getElementById('cameraUrl').value = s.cameraUrl || '';
+        document.getElementById('websocketUrl').value = s.websocketUrl || '';
+        document.getElementById('sensitivity').value = s.sensitivity || 50;
+        document.getElementById('alertToggle').checked = s.alertToggle || false;
+        document.getElementById('soundAlert').checked = s.soundAlert || false;
+        document.getElementById('themeSelect').value = s.theme || 'light';
+        document.getElementById('animations').checked = s.animations || false;
+        document.getElementById('adminName').value = s.adminName || '';
+      }
+    };
+  </script>
+</body>
+</html>

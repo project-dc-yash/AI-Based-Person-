@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Restricted Area — AI Person Detection</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,Arial,sans-serif;background:linear-gradient(180deg,#f6f8fb,#ffffff);color:#0f1724}
+    header{background:#0b1220;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+    header h1{font-size:16px}
+    header a{color:#9fb8cc;text-decoration:none;font-size:14px}
+    header a:hover{color:#fff}
+    main{max-width:1100px;margin:30px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(15,23,36,0.08)}
+    h2{font-size:18px;margin-bottom:14px;color:#0f1724}
+    section{margin-bottom:28px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    label{display:block;font-size:13px;color:#374151;margin-bottom:6px}
+    input[type=text],input[type=time],input[type=password],select{width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:14px}
+    .btn{padding:10px 14px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;margin-right:8px}
+    .btn.primary{background:linear-gradient(90deg,#00c2ff,#0066ff);color:#fff;border:none}
+    .btn.danger{background:#ef4444;color:#fff;border:none}
+    .btn:hover{opacity:0.9}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb;font-size:13px}
+    th{background:#f9fafb}
+    .badge{display:inline-block;padding:4px 8px;border-radius:8px;font-size:12px}
+    .badge.green{background:#dcfce7;color:#166534}
+    .badge.red{background:#fee2e2;color:#b91c1c}
+    .status{font-weight:600}
+    .log{max-height:200px;overflow:auto;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-top:10px;font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔒 Restricted Area — AI Person Detection</h1>
+    <a href="index.html">⬅ Back to Dashboard</a>
+  </header>
+
+  <main>
+    <h2>Manage Restricted Zones</h2>
+
+    <section>
+      <div class="row">
+        <div>
+          <label for="zoneName">Zone Name</label>
+          <input id="zoneName" type="text" placeholder="e.g., Laboratory A" />
+        </div>
+        <div>
+          <label for="zoneLevel">Access Level Required</label>
+          <select id="zoneLevel">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Top Secret">Top Secret</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="startTime">Access Start Time</label>
+          <input id="startTime" type="time" />
+        </div>
+        <div>
+          <label for="endTime">Access End Time</label>
+          <input id="endTime" type="time" />
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn primary" id="addZoneBtn">Add Zone</button>
+      </div>
+    </section>
+
+    <h2>Restricted Area List</h2>
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th>Zone Name</th>
+            <th>Access Level</th>
+            <th>Time Window</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="zoneTable"></tbody>
+      </table>
+    </section>
+
+    <h2>Security Logs</h2>
+    <section>
+      <div class="log" id="logList"></div>
+    </section>
+  </main>
+
+  <script>
+    const zoneTable = document.getElementById('zoneTable');
+    const logList = document.getElementById('logList');
+    const addZoneBtn = document.getElementById('addZoneBtn');
+
+    const zones = JSON.parse(localStorage.getItem('restricted_zones') || '[]');
+
+    function saveZones() {
+      localStorage.setItem('restricted_zones', JSON.stringify(zones));
+    }
+
+    function renderZones() {
+      zoneTable.innerHTML = '';
+      zones.forEach((z, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${z.name}</td>
+          <td>${z.level}</td>
+          <td>${z.start} - ${z.end}</td>
+          <td><span class="badge ${z.active ? 'green' : 'red'}">${z.active ? 'Active' : 'Inactive'}</span></td>
+          <td>
+            <button class="btn" onclick="toggleZone(${i})">${z.active ? 'Deactivate' : 'Activate'}</button>
+            <button class="btn danger" onclick="deleteZone(${i})">Delete</button>
+          </td>`;
+        zoneTable.appendChild(tr);
+      });
+    }
+
+    function addLog(msg) {
+      const entry = document.createElement('div');
+      entry.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+      logList.prepend(entry);
+    }
+
+    addZoneBtn.onclick = () => {
+      const name = document.getElementById('zoneName').value.trim();
+      const level = document.getElementById('zoneLevel').value;
+      const start = document.getElementById('startTime').value;
+      const end = document.getElementById('endTime').value;
+
+      if (!name || !start || !end) {
+        alert('Please fill all zone details.');
+        return;
+      }
+
+      zones.push({ name, level, start, end, active: true });
+      saveZones();
+      renderZones();
+      addLog(`Zone "${name}" added with ${level} access.`);
+      document.getElementById('zoneName').value = '';
+    };
+
+    window.toggleZone = function(index) {
+      zones[index].active = !zones[index].active;
+      saveZones();
+      renderZones();
+      addLog(`Zone "${zones[index].name}" ${zones[index].active ? 'activated' : 'deactivated'}.`);
+    };
+
+    window.deleteZone = function(index) {
+      addLog(`Zone "${zones[index].name}" deleted.`);
+      zones.splice(index, 1);
+      saveZones();
+      renderZones();
+    };
+
+    renderZones();
+  </script>
+</body>
+</html>
